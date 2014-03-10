@@ -66,7 +66,7 @@ class BaseLogFile:
         else:
             if self.defaultMode is not None:
                 ## Threadsafe Umask Access
-                with self.lock:
+                with self.__class__.lock:
                     # Set the lowest permissions
                     oldUmask = os.umask(0777)
                     try:
