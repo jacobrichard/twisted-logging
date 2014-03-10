@@ -11,8 +11,7 @@ A rotating, browsable log file.
 import os, glob, time, stat
 
 from twisted.python import threadable
-
-
+from threading import Lock
 
 class BaseLogFile:
     """
@@ -20,6 +19,7 @@ class BaseLogFile:
     """
 
     synchronized = ["write", "rotate"]
+    lock = Lock() 
 
     def __init__(self, name, directory, defaultMode=None):
         """
@@ -65,12 +65,14 @@ class BaseLogFile:
             self._file.seek(0, 2)
         else:
             if self.defaultMode is not None:
-                # Set the lowest permissions
-                oldUmask = os.umask(0777)
-                try:
-                    self._file = file(self.path, "w+", 1)
-                finally:
-                    os.umask(oldUmask)
+                ## Threadsafe Umask Access
+                with self.lock:
+                    # Set the lowest permissions
+                    oldUmask = os.umask(0777)
+                    try:
+                        self._file = file(self.path, "w+", 1)
+                    finally:
+                        os.umask(oldUmask)
             else:
                 self._file = file(self.path, "w+", 1)
         if self.defaultMode is not None:
